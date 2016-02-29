@@ -122,7 +122,10 @@ public class Elevator extends Thread{
 			if(!moving)
 			{
 				try {
-					wait();
+					synchronized(this)
+					{
+						wait();
+					}
 				} catch (InterruptedException e) {}
 			}
 			synchronized(this)

@@ -21,7 +21,7 @@ public class MainController {
 				numberOfElevator = input_number_elevator;
 			}
 		}
-		
+		elevators = new Elevator[numberOfElevator];
 		/*create elevator thread*/
 		for(int i = 0; i < numberOfElevator; i ++)
 		{
@@ -43,15 +43,15 @@ public class MainController {
 		{
 			case "f":
 			{
-				elevators[i].updatePosition(Float.parseFloat(parts[2]));
+				elevators[0].updatePosition(Float.parseFloat(parts[2]));
 			}
 			case "b":
 			{
-				elevators[i].floorButtonPressed(2, (parts[2].equals("-1"))? "Down":"Up");
+				elevators[0].floorButtonPressed(i, (parts[2].equals("-1"))? "Down":"Up");
 			}
 			case "p":
 			{
-				elevators[i].controlButtonPressed(Integer.parseInt(parts[2]));
+				elevators[0].controlButtonPressed(Integer.parseInt(parts[2]));
 			}
 		}
 	}
