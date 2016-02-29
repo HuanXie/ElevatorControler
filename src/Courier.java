@@ -9,7 +9,6 @@ public class Courier {
 	PrintWriter out;
 	BufferedReader in;
 	
-	
 	Courier()
 	{
 		try {
@@ -19,9 +18,9 @@ public class Courier {
 			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		} catch (Exception e) {
 			System.out.println("Can not connect to host");
-		}	
+		}
+		
 	}
-	
 	
 	public void send(String str)
 	{
