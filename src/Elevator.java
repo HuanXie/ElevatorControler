@@ -8,14 +8,13 @@ public class Elevator extends Thread{
 	boolean moving;
 	boolean up;
 	boolean down;
-	//FloorButton[] floors;
-	//Boolean[] controlPanel;
+	boolean newEvent;
 	PriorityBlockingQueue<Integer> up_path;
 	PriorityBlockingQueue<Integer> down_path;
 	PriorityBlockingQueue<Integer> current_path;
 	
 	// Constructor, setting all to false
-	Elevator(int id, int floor, Courier courier)
+	Elevator(int id, Courier courier)
 	{ 
 		this.id = id;
 		this.courier = courier;
@@ -23,13 +22,7 @@ public class Elevator extends Thread{
 		moving = false;
 		up = false;
 		down = false;
-		/*floors = new FloorButton[floor+1];
-		controlPanel = new Boolean[floor+1];
-		for(int i = 0; i < floors.length; i++)
-		{
-			floors[i] = new FloorButton();
-			controlPanel[i] = false;
-		}*/
+		newEvent = false;
 		up_path = new PriorityBlockingQueue<Integer>();
 		down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder());
 	}
@@ -37,14 +30,16 @@ public class Elevator extends Thread{
 	public synchronized void updatePosition(float position)
 	{
 		this.position = position;
-		if(Math.abs(position-Math.round(position)) < 0.1)
+		if(Math.abs(position-Math.round(position)) < 0.04)
 		{
+			System.out.println("At " + Math.round(position) + " floor");
 			notifyAll();
 		}
 	}
 	
 	public synchronized void floorButtonPressed(int floor, String direction)
 	{
+		System.out.println("At " + floor + " floor someone pressed " + direction);
 		if(direction.equals("Up"))
 		{
 			if(moving)
@@ -53,19 +48,39 @@ public class Elevator extends Thread{
 				{
 					if(position > floor)
 					{
-						up_path.add(floor);
+						System.out.println("Add this request to down_path");
+						if(!down_path.contains(floor))
+						{
+							down_path.add(floor);
+						}
 					}else{
-						current_path.add(floor);
+						System.out.println("Add this request to current_path");
+						if(!current_path.contains(floor))
+						{
+							current_path.add(floor);
+						}
 					}
 				}else{
-					up_path.add(floor);
+					System.out.println("Add this request to up_path");
+					if(!up_path.contains(floor))
+					{
+						up_path.add(floor);
+					}
 				}
 			}else{
 				if(position > floor)
 				{
-					down_path.add(floor);
+					System.out.println("Add this request to down_path");
+					if(!down_path.contains(floor))
+					{
+						down_path.add(floor);
+					}
 				}else{
-					up_path.add(floor);
+					System.out.println("Add this request to up_path");
+					if(!up_path.contains(floor))
+					{
+						up_path.add(floor);
+					}
 				}
 			}
 		}else{
@@ -75,61 +90,119 @@ public class Elevator extends Thread{
 				{
 					if(position < floor)
 					{
-						down_path.add(floor);
+						System.out.println("Add this request to up_path");
+						if(!up_path.contains(floor))
+						{
+							up_path.add(floor);
+						}
 					}else{
-						current_path.add(floor);
+						System.out.println("Add this request to current_path");
+						if(!current_path.contains(floor))
+						{
+							current_path.add(floor);
+						}
 					}
 				}else{
-					down_path.add(floor);
+					System.out.println("Add this request to down_path");
+					if(!down_path.contains(floor))
+					{
+						down_path.add(floor);
+					}
 				}
 			}else{
-				if(position < floor)
+				if(position > floor)
 				{
-					up_path.add(floor);
+					System.out.println("Add this request to down_path");
+					if(!down_path.contains(floor))
+					{
+						down_path.add(floor);
+					}
 				}else{
-					down_path.add(floor);
+					System.out.println("Add this request to up_path");
+					if(!up_path.contains(floor))
+					{
+						up_path.add(floor);
+					}
 				}
 			}
 		}
+		newEvent = true;
 		notifyAll();
 	}
 	
 	public synchronized void controlButtonPressed(int floor)
 	{
-		if(up)
+		System.out.println("Someone at elevator pressed " + floor + " floor");
+		if(moving)
 		{
-			if(floor > position)
+			if(up)
 			{
-				current_path.add(floor);
+				if(floor > position)
+				{
+					System.out.println("Add this request to current_path");
+					if(!current_path.contains(floor))
+					{
+						current_path.add(floor);
+					}
+				}else{
+					System.out.println("Add this request to down_path");
+					if(!down_path.contains(floor))
+					{
+						down_path.add(floor);
+					}
+				}
 			}else{
-				down_path.add(floor);
+				if(floor < position)
+				{
+					System.out.println("Add this request to current_path");
+					if(!current_path.contains(floor))
+					{
+						current_path.add(floor);
+					}
+				}else{
+					System.out.println("Add this request to up_path");
+					if(!up_path.contains(floor))
+					{
+						up_path.add(floor);
+					}
+				}
 			}
 		}else{
-			if(floor < position)
+			if(position > floor)
 			{
-				current_path.add(floor);
+				System.out.println("Add this request to down_path");
+				if(!down_path.contains(floor))
+				{
+					down_path.add(floor);
+				}
 			}else{
-				up_path.add(floor);
+				System.out.println("Add this request to up_path");
+				if(!up_path.contains(floor))
+				{
+					up_path.add(floor);
+				}
 			}
 		}
+		newEvent = true;
 		notifyAll();
 	}
 	
 	public void run()
 	{
-		while(true)
+		try
 		{
-			if(!moving)
+			while(true)
 			{
-				try {
+				while(!newEvent && !moving)
+				{
 					synchronized(this)
 					{
 						wait();
 					}
-				} catch (InterruptedException e) {}
 			}
 			synchronized(this)
 			{
+				newEvent = false;
 				if(!moving)
 				{
 					if(up_path.isEmpty())
@@ -137,95 +210,107 @@ public class Elevator extends Thread{
 						courier.send("m" + " " + id + " " + "-1");
 						moving = true;
 						down = true;
-						current_path = down_path;
+						up = false;
+						System.out.println("Current path is down");
+						current_path = new PriorityBlockingQueue<Integer>(down_path);
 						down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder());
 					}else{
 						courier.send("m" + " " + id + " " + "1");
 						moving = true;
 						up = true;
-						current_path = up_path;
+						down = false;
+						System.out.println("Current path is up");
+						current_path = new PriorityBlockingQueue<Integer>(up_path);
 						up_path = new PriorityBlockingQueue<Integer>();
 					}
 				}else{
-					while(Math.abs(position-Math.round(position)) > 0.1)
+					while(Math.abs(position-Math.round(position)) > 0.04)
 					{
-						try {
-							wait();
-						} catch (InterruptedException e) {}
+						wait();
 					}
-					if(Math.abs(current_path.peek()-Math.round(position)) < 0.1)
+					if(Math.abs(current_path.peek()-Math.round(position)) < 0.04)
 					{
-						try {
-							courier.send("m" + " " + id + " " + "0");
-							courier.send("d" + " " + id + " " + "1");
-							Thread.sleep(1000);
-							courier.send("d" + " " + id + " " + "-1");
-							Thread.sleep(1000);
-							current_path.remove();
-							if(current_path.isEmpty())
+						courier.send("m" + " " + id + " " + "0");
+						courier.send("d" + " " + id + " " + "1");
+						Thread.sleep(2000);
+						courier.send("d" + " " + id + " " + "-1");
+						Thread.sleep(2000);
+						current_path.remove();
+						if(current_path.isEmpty())
+						{
+							if(up)
 							{
-								if(up)
+								if(down_path.isEmpty())
 								{
-									if(down_path.isEmpty())
-									{
-										if(up_path.isEmpty())
-										{
-											moving = false;
-											up = false;
-											down = false;
-										}else{
-											courier.send("m" + " " + id + " " + "1");
-											moving = true;
-											up = true;
-											down = false;
-											current_path = up_path;
-											up_path = new PriorityBlockingQueue<Integer>();
-										}
-									}else{
-										courier.send("m" + " " + id + " " + "-1");
-										moving = true;
-										up = false;
-										down = true;
-										current_path = down_path;
-										down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder());
-									}
-								}else{
 									if(up_path.isEmpty())
 									{
-										if(down_path.isEmpty())
-										{
-											moving = false;
-											up = false;
-											down = false;
-										}else{
-											courier.send("m" + " " + id + " " + "-1");
-											moving = true;
-											up = false;
-											down = true;
-											current_path = down_path;
-											down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder());
-										}
+										moving = false;
+										up = false;
+										down = false;
 									}else{
 										courier.send("m" + " " + id + " " + "1");
 										moving = true;
 										up = true;
 										down = false;
-										current_path = up_path;
+										System.out.println("Current path is up");
+										current_path = new PriorityBlockingQueue<Integer>(up_path);
 										up_path = new PriorityBlockingQueue<Integer>();
 									}
+								}else{
+									courier.send("m" + " " + id + " " + "-1");
+									moving = true;
+									up = false;
+									down = true;
+									System.out.println("Current path is down");
+									current_path = new PriorityBlockingQueue<Integer>(down_path);
+									down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder());
+								}
+							}else{
+								if(up_path.isEmpty())
+								{
+									if(down_path.isEmpty())
+									{
+										moving = false;
+										up = false;
+										down = false;
+									}else{
+										courier.send("m" + " " + id + " " + "-1");
+										moving = true;
+										up = false;
+										down = true;
+										System.out.println("Current path is down");
+										current_path = new PriorityBlockingQueue<Integer>(down_path);
+										down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder());
+									}
+								}else{
+									courier.send("m" + " " + id + " " + "1");
+									moving = true;
+									up = true;
+									down = false;
+									System.out.println("Current path is up");
+									current_path = new PriorityBlockingQueue<Integer>(up_path);
+									up_path = new PriorityBlockingQueue<Integer>();
 								}
 							}
-							if(up)
+						}else{
+							if(current_path.peek() > position)
 							{
 								courier.send("m" + " " + id + " " + "1");
+								moving = true;
+								up = true;
+								down = false;
 							}else{
 								courier.send("m" + " " + id + " " + "-1");
+								moving = true;
+								down = true;
+								up = false;
 							}
-						} catch (InterruptedException e) {}
+						}
 					}
 				}
 			}
 		}
+		}catch(InterruptedException e){}
 	}
 	
 }
