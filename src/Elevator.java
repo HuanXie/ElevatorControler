@@ -9,6 +9,9 @@ public class Elevator extends Thread{
 	boolean up;
 	boolean down;
 	boolean newEvent;
+	boolean nextPath; // True when current == up, false when current == down
+	boolean wakeUp;
+	Alarm alarm;
 	PriorityBlockingQueue<Integer> up_path;
 	PriorityBlockingQueue<Integer> down_path;
 	PriorityBlockingQueue<Integer> current_path;
@@ -23,6 +26,9 @@ public class Elevator extends Thread{
 		up = false;
 		down = false;
 		newEvent = false;
+		wakeUp = false;
+		alarm = new Alarm(this);
+		alarm.start();
 		up_path = new PriorityBlockingQueue<Integer>();
 		down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder());
 	}
@@ -35,6 +41,11 @@ public class Elevator extends Thread{
 		
 		return score;
 	}*/
+	
+	public synchronized void wakeUp(){
+		wakeUp = true;
+		notifyAll();
+	}
 	
 	public synchronized void updatePosition(float position)
 	{
@@ -63,36 +74,54 @@ public class Elevator extends Thread{
 							up_path.add(floor);
 						}
 					}else{
-						System.out.println("Add this request to current_path");
-						if(!current_path.contains(floor))
+						if(nextPath)
 						{
-							current_path.add(floor);
+							System.out.println("Add this request to current_path");
+							if(!current_path.contains(floor))
+							{
+								current_path.add(floor);
+							}
+						}else{
+							System.out.println("Add this request to up_path");
+							if(!current_path.contains(floor))
+							{
+								up_path.add(floor);
+							}
 						}
 					}
 				}else{
-					System.out.println("Add this request to up_path");
-					if(!up_path.contains(floor))
+					if(position > floor)
 					{
-						up_path.add(floor);
+						if(nextPath)
+						{
+							System.out.println("Add this request to current_path");
+							if(!current_path.contains(floor))
+							{
+								current_path.add(floor);
+							}
+						}else{
+							System.out.println("Add this request to up_path");
+							if(!up_path.contains(floor))
+							{
+								up_path.add(floor);
+							}
+						}
+					}else{
+						System.out.println("Add this request to up_path");
+						if(!up_path.contains(floor))
+						{
+							up_path.add(floor);
+						}
 					}
 				}
 			}else{
-				if(position > floor)
+				System.out.println("Add this request to up_path");
+				if(!up_path.contains(floor))
 				{
-					System.out.println("Add this request to down_path");
-					if(!down_path.contains(floor))
-					{
-						down_path.add(floor);
-					}
-				}else{
-					System.out.println("Add this request to up_path");
-					if(!up_path.contains(floor))
-					{
-						up_path.add(floor);
-					}
+					up_path.add(floor);
 				}
 			}
-		}else{
+		}else{ // Direction == down
 			if(moving)
 			{
 				if(down)
@@ -105,33 +134,51 @@ public class Elevator extends Thread{
 							down_path.add(floor);
 						}
 					}else{
-						System.out.println("Add this request to current_path");
-						if(!current_path.contains(floor))
+						if(!nextPath)
 						{
-							current_path.add(floor);
+							System.out.println("Add this request to current_path");
+							if(!current_path.contains(floor))
+							{
+								current_path.add(floor);
+							}
+						}else{
+							System.out.println("Add this request to down_path");
+							if(!down_path.contains(floor))
+							{
+								down_path.add(floor);
+							}
 						}
 					}
 				}else{
-					System.out.println("Add this request to down_path");
-					if(!down_path.contains(floor))
+					if(position < floor)
 					{
-						down_path.add(floor);
+						if(!nextPath)
+						{
+							System.out.println("Add this request to current_path");
+							if(!current_path.contains(floor))
+							{
+								current_path.add(floor);
+							}
+						}else{
+							System.out.println("Add this request to down_path");
+							if(!down_path.contains(floor))
+							{
+								down_path.add(floor);
+							}
+						}
+					}else{
+						System.out.println("Add this request to down_path");
+						if(!down_path.contains(floor))
+						{
+							down_path.add(floor);
+						}
 					}
 				}
 			}else{
-				if(position > floor)
+				System.out.println("Add this request to down_path");
+				if(!down_path.contains(floor))
 				{
-					System.out.println("Add this request to down_path");
-					if(!down_path.contains(floor))
-					{
-						down_path.add(floor);
-					}
-				}else{
-					System.out.println("Add this request to up_path");
-					if(!up_path.contains(floor))
-					{
-						up_path.add(floor);
-					}
+					down_path.add(floor);
 				}
 			}
 		}
@@ -148,31 +195,67 @@ public class Elevator extends Thread{
 			{
 				if(floor > position)
 				{
-					System.out.println("Add this request to current_path");
-					if(!current_path.contains(floor))
+					if(nextPath)
 					{
-						current_path.add(floor);
+						System.out.println("Add this request to current_path");
+						if(!current_path.contains(floor))
+						{
+							current_path.add(floor);
+						}
+					}else{
+						System.out.println("Add this request to up_path");
+						if(!up_path.contains(floor))
+						{
+							up_path.add(floor);
+						}
 					}
 				}else{
-					System.out.println("Add this request to down_path");
-					if(!down_path.contains(floor))
+					if(nextPath)
 					{
-						down_path.add(floor);
+						System.out.println("Add this request to down_path");
+						if(!down_path.contains(floor))
+						{
+							down_path.add(floor);
+						}
+					}else{
+						System.out.println("Add this request to current_path");
+						if(!current_path.contains(floor))
+						{
+							current_path.add(floor);
+						}
 					}
 				}
 			}else{
 				if(floor < position)
 				{
-					System.out.println("Add this request to current_path");
-					if(!current_path.contains(floor))
+					if(nextPath)
 					{
-						current_path.add(floor);
+						System.out.println("Add this request to down_path");
+						if(!down_path.contains(floor))
+						{
+							down_path.add(floor);
+						}
+					}else{
+						System.out.println("Add this request to current_path");
+						if(!current_path.contains(floor))
+						{
+							current_path.add(floor);
+						}
 					}
 				}else{
-					System.out.println("Add this request to up_path");
-					if(!up_path.contains(floor))
+					if(nextPath)
 					{
-						up_path.add(floor);
+						System.out.println("Add this request to current_path");
+						if(!current_path.contains(floor))
+						{
+							current_path.add(floor);
+						}
+					}else{
+						System.out.println("Add this request to up_path");
+						if(!up_path.contains(floor))
+						{
+							up_path.add(floor);
+						}
 					}
 				}
 			}
@@ -216,18 +299,36 @@ public class Elevator extends Thread{
 				{
 					if(up_path.isEmpty())
 					{
-						courier.send("m" + " " + id + " " + "-1");
-						moving = true;
-						down = true;
-						up = false;
+						if(down_path.peek() > position)
+						{
+							courier.send("m" + " " + id + " " + "1");
+							moving = true;
+							down = false;
+							up = true;
+						}else{
+							courier.send("m" + " " + id + " " + "-1");
+							moving = true;
+							down = true;
+							up = false;
+						}
 						System.out.println("Current path is down");
+						nextPath = false;
 						current_path = new PriorityBlockingQueue<Integer>(down_path);
 						down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder());
 					}else{
-						courier.send("m" + " " + id + " " + "1");
-						moving = true;
-						up = true;
-						down = false;
+						if(up_path.peek() > position)
+						{
+							courier.send("m" + " " + id + " " + "1");
+							moving = true;
+							up = true;
+							down = false;
+						}else{
+							courier.send("m" + " " + id + " " + "-1");
+							moving = true;
+							up = false;
+							down = true;
+						}
+						nextPath = true;
 						System.out.println("Current path is up");
 						current_path = new PriorityBlockingQueue<Integer>(up_path);
 						up_path = new PriorityBlockingQueue<Integer>();
@@ -241,13 +342,104 @@ public class Elevator extends Thread{
 					{
 						courier.send("m" + " " + id + " " + "0");
 						courier.send("d" + " " + id + " " + "1");
-						Thread.sleep(2000);
+						alarm.sleep(2000);
+						while(!wakeUp)
+						{
+							wait();
+						}
+						wakeUp = false;
 						courier.send("d" + " " + id + " " + "-1");
-						Thread.sleep(2000);
+						alarm.sleep(2000);
+						while(!wakeUp)
+						{
+							wait();
+						}
+						wakeUp = false;
 						current_path.remove();
 						if(current_path.isEmpty())
 						{
-							if(up)
+							if(nextPath)
+							{
+								if(!down_path.isEmpty())
+								{
+									current_path = down_path;
+									nextPath = false;
+									if(current_path.peek() > position)
+									{
+										courier.send("m" + " " + id + " " + "1");
+										moving = true;
+										up = true;
+										down = false;
+									}else{
+										courier.send("m" + " " + id + " " + "-1");
+										moving = true;
+										up = false;
+										down = true;
+									}
+								}else{
+									if(!up_path.isEmpty())
+									{
+										current_path = up_path;
+										nextPath = true;
+										if(current_path.peek() > position)
+										{
+											courier.send("m" + " " + id + " " + "1");
+											moving = true;
+											up = true;
+											down = false;
+										}else{
+											courier.send("m" + " " + id + " " + "-1");
+											moving = true;
+											up = false;
+											down = true;
+										}
+									}else{
+										moving = false;
+										up = false;
+										down = false;
+									}
+								}
+							}else{
+								if(!up_path.isEmpty()){
+									current_path = up_path;
+									nextPath = true;
+									if(current_path.peek() > position)
+									{
+										courier.send("m" + " " + id + " " + "1");
+										moving = true;
+										up = true;
+										down = false;
+									}else{
+										courier.send("m" + " " + id + " " + "-1");
+										moving = true;
+										up = false;
+										down = true;
+									}
+								}else{
+									if(!down_path.isEmpty())
+									{
+										current_path = down_path;
+										nextPath = false;
+										if(current_path.peek() > position)
+										{
+											courier.send("m" + " " + id + " " + "1");
+											moving = true;
+											up = true;
+											down = false;
+										}else{
+											courier.send("m" + " " + id + " " + "-1");
+											moving = true;
+											up = false;
+											down = true;
+										}
+									}else{
+										moving = false;
+										up = false;
+										down = false;
+									}
+								}
+							}
+							/*if(up)
 							{
 								if(down_path.isEmpty())
 								{
@@ -300,7 +492,7 @@ public class Elevator extends Thread{
 									current_path = new PriorityBlockingQueue<Integer>(up_path);
 									up_path = new PriorityBlockingQueue<Integer>();
 								}
-							}
+							}*/
 						}else{
 							if(current_path.peek() > position)
 							{
