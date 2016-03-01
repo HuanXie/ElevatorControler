@@ -27,6 +27,15 @@ public class Elevator extends Thread{
 		down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder());
 	}
 	
+	/*public synchronized int score(int floor, String direction)
+	{
+		int score;
+		int up_max;
+		int down_max;
+		
+		return score;
+	}*/
+	
 	public synchronized void updatePosition(float position)
 	{
 		this.position = position;
@@ -48,10 +57,10 @@ public class Elevator extends Thread{
 				{
 					if(position > floor)
 					{
-						System.out.println("Add this request to down_path");
-						if(!down_path.contains(floor))
+						System.out.println("Add this request to up_path");
+						if(!up_path.contains(floor))
 						{
-							down_path.add(floor);
+							up_path.add(floor);
 						}
 					}else{
 						System.out.println("Add this request to current_path");
@@ -90,10 +99,10 @@ public class Elevator extends Thread{
 				{
 					if(position < floor)
 					{
-						System.out.println("Add this request to up_path");
-						if(!up_path.contains(floor))
+						System.out.println("Add this request to down_path");
+						if(!down_path.contains(floor))
 						{
-							up_path.add(floor);
+							down_path.add(floor);
 						}
 					}else{
 						System.out.println("Add this request to current_path");

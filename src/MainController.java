@@ -19,23 +19,29 @@ public class MainController {
 	private static void messageParser(String message, Elevator e)
 	{
 		String[] parts = message.split(" ");
-		int i = Integer.parseInt(parts[1]);
+		int i;
 		switch(parts[0])
 		{
 			case "f":
 			{
+				i = Integer.parseInt(parts[1]);
 				e.updatePosition(Float.parseFloat(parts[2]));
 				break;
 			}
 			case "b":
 			{
+				i = Integer.parseInt(parts[1]);
 				e.floorButtonPressed(i, (parts[2].equals("-1"))? "Down":"Up");
 				break;
 			}
 			case "p":
 			{
+				i = Integer.parseInt(parts[1]);
 				e.controlButtonPressed(Integer.parseInt(parts[2]));
 				break;
+			}
+			case "v":
+			{
 			}
 		}
 	}
