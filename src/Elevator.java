@@ -4,7 +4,6 @@ import java.util.concurrent.PriorityBlockingQueue;
 public class Elevator extends Thread{
 	int id;
 	int floor;
-	Courier courier; // message dealer between controller and remote elevator simulator
 	float position; //current position of elevator
 	boolean moving;  //status of elevator: moving or not
 	boolean up;  //status of elevator: moving up or not
@@ -24,11 +23,10 @@ public class Elevator extends Thread{
 	int up_min;
 	
 	// Constructor, setting all to false
-	Elevator(int id, int floor, Courier courier)
+	Elevator(int id, int floor)
 	{ 
 		this.id = id;
 		this.floor = floor;
-		this.courier = courier;
 		position = 0f;
 		moving = false;
 		up = false;
@@ -45,6 +43,10 @@ public class Elevator extends Thread{
 		down_min = floor;
 		up_max = 0;
 		up_min = floor;
+	}
+	
+	public synchronized boolean isMoving(){
+		return moving;
 	}
 
 	private synchronized void updateCurrent(int floor)
@@ -336,6 +338,7 @@ public class Elevator extends Thread{
 							{
 								if(down_path.isEmpty())
 								{
+									System.out.println("current_max="+current_max);
 									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
 								}else{
 									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
@@ -383,6 +386,23 @@ public class Elevator extends Thread{
 									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
 								}else{
 									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
+								}
+							}
+						}else{
+							if(up_path.isEmpty())
+							{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+								}else{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
+								}
+							}else{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-floor));
+								}else{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-down_max) + Math.abs(down_max-floor));
 								}
 							}
 						}
@@ -567,12 +587,12 @@ public class Elevator extends Thread{
 						if(down_path.peek() > position)  //elevator position is lower than floor
 						{
 							
-							courier.send("m" + " " + id + " " + "1"); //move N'th elevator upwards
+							MainController.up(id); //move N'th elevator upwards
 							moving = true;
 							down = false;
 							up = true;
 						}else{ //elevator position is higher than floor
-							courier.send("m" + " " + id + " " + "-1"); //move N'th elevator downwards
+							MainController.down(id); //move N'th elevator downwards
 							moving = true;
 							down = true;
 							up = false;
@@ -588,12 +608,12 @@ public class Elevator extends Thread{
 					}else{//new up event
 						if(up_path.peek() > position) //elevator position is lower than floor
 						{
-							courier.send("m" + " " + id + " " + "1"); //move N'th elevator upwards
+							MainController.up(id); //move N'th elevator upwards
 							moving = true;
 							up = true;
 							down = false;
 						}else{ //elevator position is higher than floor
-							courier.send("m" + " " + id + " " + "-1"); //move N'th elevator downwards
+							MainController.down(id); //move N'th elevator downwards
 							moving = true;
 							up = false;
 							down = true;
@@ -614,15 +634,15 @@ public class Elevator extends Thread{
 					}
 					if(Math.abs(current_path.peek()-Math.round(position)) < 0.04) //position of elevator get close to a certain floor
 					{
-						courier.send("m" + " " + id + " " + "0"); //ask elevator to stop for a while
-						courier.send("d" + " " + id + " " + "1"); //open door
+						MainController.stop(id); //ask elevator to stop for a while
+						MainController.openDoor(id); //open door
 						alarm.sleep(2000); //wait 2 seconds
 						while(!wakeUp) 
 						{
 							wait(); 
 						}
 						wakeUp = false;
-						courier.send("d" + " " + id + " " + "-1"); //close door
+						MainController.closeDoor(id); //close door
 						alarm.sleep(2000);
 						while(!wakeUp)
 						{
@@ -636,13 +656,23 @@ public class Elevator extends Thread{
 							{
 								if(!down_path.isEmpty()) //waiting task in down path,set current path to down path
 								{
-									current_path = down_path;
+									current_path = new PriorityBlockingQueue<Integer>(down_path);
+									current_max = down_max;
+									current_min = down_min;
+									down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder());
+									down_max = 0;
+									down_min = floor;
 									direction_current_path = false;
 									pick_up_passenger(current_path, position);
 								}else{  //no task in down path
 									if(!up_path.isEmpty()) //task in up path
 									{
-										current_path = up_path;
+										current_path = new PriorityBlockingQueue<Integer>(up_path);
+										current_max = up_max;
+										current_min = up_min;
+										up_path = new PriorityBlockingQueue<Integer>();
+										up_max = 0;
+										up_min = floor;
 										direction_current_path = true;
 										pick_up_passenger(current_path, position);
 									}else{ // no task anymore
@@ -653,13 +683,23 @@ public class Elevator extends Thread{
 								}
 							}else{  //current path is down
 								if(!up_path.isEmpty()){   //more task in up path
-									current_path = up_path;
+									current_path = new PriorityBlockingQueue<Integer>(up_path);
+									current_max = up_max;
+									current_min = up_min;
+									up_path = new PriorityBlockingQueue<Integer>();
+									up_max = 0;
+									up_min = floor;
 									direction_current_path = true;
 									pick_up_passenger(current_path, position);
 								}else{ //no task in up path
 									if(!down_path.isEmpty()) //more task in down path
 									{
-										current_path = down_path;
+										current_path = new PriorityBlockingQueue<Integer>(up_path);
+										current_max = up_max;
+										current_min = up_min;
+										up_path = new PriorityBlockingQueue<Integer>();
+										up_max = 0;
+										up_min = floor;
 										direction_current_path = false;
 										pick_up_passenger(current_path, position);
 									}else{ //no more task to do
@@ -713,12 +753,12 @@ public class Elevator extends Thread{
 	{
 		if(current_path.peek() > position)  //position lower than calling floor
 		{
-			courier.send("m" + " " + id + " " + "1"); //move upwards
+			MainController.up(id); //move upwards
 			moving = true;
 			up = true;
 			down = false;
 		}else{  //position higher than calling floor
-			courier.send("m" + " " + id + " " + "-1"); //move downwards
+			MainController.down(id); //move downwards
 			moving = true;
 			down = true;
 			up = false;
