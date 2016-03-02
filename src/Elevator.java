@@ -3,6 +3,7 @@ import java.util.concurrent.PriorityBlockingQueue;
 
 public class Elevator extends Thread{
 	int id;
+	int floor;
 	Courier courier; // message dealer between controller and remote elevator simulator
 	float position; //current position of elevator
 	boolean moving;  //status of elevator: moving or not
@@ -15,11 +16,18 @@ public class Elevator extends Thread{
 	PriorityBlockingQueue<Integer> up_path;  //when floor button with direction up is pressed, put it in queue up_path
 	PriorityBlockingQueue<Integer> down_path; //when floor button with direction down is pressed, put it in queue down_path
 	PriorityBlockingQueue<Integer> current_path; //current path elevator is used
+	int current_max;
+	int current_min;
+	int down_max;
+	int down_min;
+	int up_max;
+	int up_min;
 	
-	// Constructor and initialization, setting all boolean to false,
-	Elevator(int id, Courier courier)
+	// Constructor, setting all to false
+	Elevator(int id, int floor, Courier courier)
 	{ 
 		this.id = id;
+		this.floor = floor;
 		this.courier = courier;
 		position = 0f;
 		moving = false;
@@ -31,9 +39,362 @@ public class Elevator extends Thread{
 		alarm.start();
 		up_path = new PriorityBlockingQueue<Integer>();
 		down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder());
+		current_max = 0;
+		current_min = floor;
+		down_max = 0;
+		down_min = floor;
+		up_max = 0;
+		up_min = floor;
+	}
+
+	private synchronized void updateCurrent(int floor)
+	{
+		if(floor > current_max)
+		{
+			current_max = floor;
+		}
+		if(floor < current_min)
+		{
+			current_min = floor;
+		}
 	}
 	
-	/*Alarm object will call this function to wake up elevator when it sleeps at the time of opening and closing door*/
+	private synchronized void updateUp(int floor)
+	{
+		if(floor > up_max)
+		{
+			up_max = floor;
+		}
+		if(floor < up_min)
+		{
+			up_min = floor;
+		}
+	}
+	
+	private synchronized void updateDown(int floor)
+	{
+		if(floor > down_max)
+		{
+			down_max = floor;
+		}
+		if(floor < down_min)
+		{
+			down_min = floor;
+		}
+	}
+	
+	public synchronized int score(int floor, String direction)
+	{
+		int up_max = floor;
+		int down_max = 0;
+		if(direction.equals("Up"))
+		{
+			if(moving)
+			{
+				if(up)
+				{
+					if(position > floor)
+					{
+						if(direction_current_path) // NextPath = true, position > floor, up, "Up"
+						{
+							if(down_path.isEmpty())
+							{
+								if(up_path.isEmpty())
+								{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+								}else{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(floor-up_min));
+								}
+							}else{
+								if(up_path.isEmpty())
+								{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(down_max-current_max)+Math.abs(down_max-down_min)+Math.abs(floor-down_min));
+								}
+								else{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(down_max-current_max)+Math.abs(down_max-down_min)+Math.abs(down_min-up_min)+Math.abs(floor-up_min));
+								}
+							}
+						}else{ // NextPath = false, position > floor, up, "Up"
+							if(up_path.isEmpty())
+							{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+								}
+								else{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+								}
+							}else{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(floor-up_min));
+								}else{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(floor-up_min));
+								}
+							}
+						}
+					}else{ 
+						if(direction_current_path) // NextPath = true, position < floor, up, "Up"
+						{
+							if(up_path.isEmpty())
+							{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(floor-Math.round(position)));
+								}else{
+									return(Math.abs(floor-Math.round(position)));
+								}
+							}else{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(floor-Math.round(position)));
+								}else{
+									return(Math.abs(floor-Math.round(position)));
+								}
+							}
+						}else{ // NextPath = false, position < floor, up, "Up"
+							if(up_path.isEmpty())
+							{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+								}else{
+									System.out.println("Current_max=" + current_max + ",position=" + Math.round(position) + ",floor="+floor);
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+								}
+							}else{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(floor-up_min));
+								}else{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(floor-up_min));
+								}
+							}
+						}
+					}
+				}else{
+					if(position > floor)
+					{
+						if(direction_current_path) // NextPath = true, position > floor, down, "Up"
+						{
+							if(up_path.isEmpty())
+							{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+								}else{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-down_min)+Math.abs(floor-down_min));
+								}
+							}
+						}else{ // nextPath = false, position > floor, down, "Up
+							if(up_path.isEmpty())
+							{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+								}else{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+								}
+							}else{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(floor-up_min));
+								}else{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(floor-up_min));
+								}
+							}
+						}
+					}else{
+						if(direction_current_path) // nextPath = true, position < floor, down, "Up"
+						{
+							if(down_path.isEmpty())
+							{
+								if(up_path.isEmpty())
+								{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+								}else{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(floor-up_min));
+								}
+							}else{
+								if(up_path.isEmpty())
+								{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-down_min)+Math.abs(floor-down_min));
+								}else{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-down_min)+Math.abs(down_min-up_min)+Math.abs(floor-up_min));
+								}
+							}
+						}else{ // nextPath = false, position < floor, down, "Up"
+							if(down_path.isEmpty())
+							{
+								if(up_path.isEmpty())
+								{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+								}else{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(floor-up_min));
+								}
+							}else{
+								if(up_path.isEmpty())
+								{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+								}else{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(floor-up_min));
+								}
+							}
+						}
+					}
+				}
+			}else{ // Not moving
+				return(Math.abs(Math.round(position)-floor));
+			}
+		}else{ // 
+			if(moving)
+			{
+				if(down)
+				{
+					if(position < floor)
+					{
+						if(direction_current_path) // nextPath = true, position < floor, down, "Down"
+						{
+							if(up_path.isEmpty())
+							{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+								}else{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-floor));
+								}
+							}else{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+								}else{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-floor));
+								}
+							}
+						}else{ // nextPath = false, position < floor, down, "Down"
+							if(up_path.isEmpty())
+							{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+								}else{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-floor));
+								}
+							}else{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-floor));
+								}else{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-down_max)+Math.abs(down_max-floor));
+								}
+							}
+						}
+					}else{
+						if(direction_current_path) // nextPath = true, position > floor, down, "Down"
+						{
+							if(up_path.isEmpty())
+							{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+								}else{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-floor));
+								}
+							}else{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+								}else{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-floor));
+								}
+							}
+						}else{ // nextPath = false, position > floor, down, "Down"
+							if(up_path.isEmpty())
+							{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(Math.round(position)-floor));
+								}else{
+									return(Math.abs(Math.round(position)-floor));
+								}
+							}else{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(Math.round(position)-floor));
+								}else{
+									return(Math.abs(Math.round(position)-floor));
+								}
+							}
+						}
+					}
+				}else{
+					if(position < floor)
+					{
+						if(direction_current_path) // nextPath = true, position < floor, up, "Down"
+						{
+							if(up_path.isEmpty())
+							{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+								}else{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
+								}
+							}else{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+								}else{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
+								}
+							}
+						}else{ // nextPath = false, position < floor, up, "Down"
+							if(up_path.isEmpty())
+							{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+								}else{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
+								}
+							}else{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-floor));
+								}else{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-down_max)+Math.abs(down_max-floor));
+								}
+							}
+						}
+					}else{
+						if(direction_current_path) // nextPath = true, position > floor, up, "Down"
+						{
+							if(up_path.isEmpty())
+							{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+								}else{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
+								}
+							}else{
+								if(down_path.isEmpty())
+								{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+								}else{
+									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
+								}
+							}
+						}
+					}
+				}
+			}else{ // Not moving
+				return(Math.abs(Math.round(position)-floor));
+			}
+		}
+		return 0;
+	}
+	
 	public synchronized void wakeUp(){
 		wakeUp = true;
 		notifyAll();
@@ -219,10 +580,13 @@ public class Elevator extends Thread{
 						System.out.println("Current path is down");
 						direction_current_path = false; //set flag of current path to down
 						current_path = new PriorityBlockingQueue<Integer>(down_path);
-						 //down path is in reverseOrder(bigger - smaller)
+						current_max = down_max;
+						current_min = down_min;
 						down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder());
-					}else{ //new up event
-						if(up_path.peek() > position)  //elevator position is lower than floor
+						down_max = 0;
+						down_min = floor;
+					}else{//new up event
+						if(up_path.peek() > position) //elevator position is lower than floor
 						{
 							courier.send("m" + " " + id + " " + "1"); //move N'th elevator upwards
 							moving = true;
@@ -237,7 +601,11 @@ public class Elevator extends Thread{
 						direction_current_path = true; //set flag of current path to up
 						System.out.println("Current path is up");
 						current_path = new PriorityBlockingQueue<Integer>(up_path);
-						up_path = new PriorityBlockingQueue<Integer>(); //in order small to big
+						current_max = up_max;
+						current_min = up_min;
+						up_path = new PriorityBlockingQueue<Integer>();
+						up_max = 0;
+						up_min = floor;
 					}
 				}else{ //elevator is not moving
 					while(Math.abs(position-Math.round(position)) > 0.04)
@@ -317,6 +685,7 @@ public class Elevator extends Thread{
 		if(!up_path.contains(floor))
 		{
 			up_path.add(floor);
+			updateUp(floor);
 		}
 	}
 	
@@ -326,6 +695,7 @@ public class Elevator extends Thread{
 		if(!down_path.contains(floor))
 		{
 			down_path.add(floor);
+			updateDown(floor);
 		}
 	}
 	
@@ -335,6 +705,7 @@ public class Elevator extends Thread{
 		if(!current_path.contains(floor))
 		{
 			current_path.add(floor);
+			updateCurrent(floor);
 		}
 	}
 	

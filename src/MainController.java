@@ -4,7 +4,7 @@ public class MainController {
 	{
 		Courier c = new Courier();
 		
-		Elevator e = new Elevator(1,c);
+		Elevator e = new Elevator(1,5,c);
 		e.start();
 		
 		String m;
@@ -32,6 +32,7 @@ public class MainController {
 			{
 				i = Integer.parseInt(parts[1]);
 				e.floorButtonPressed(i, (parts[2].equals("-1"))? "Down":"Up");
+				System.out.println(e.score(i, (parts[2].equals("-1"))? "Down":"Up"));
 				break;
 			}
 			case "p":
