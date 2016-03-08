@@ -124,323 +124,275 @@ public class Elevator extends Thread{
 		int down_max = 0;
 		if(direction.equals("Up"))
 		{
-			if(moving)
+			if(moving && up)
 			{
-				if(up)
+				if(position > floor)
 				{
-					if(position > floor)
+					if(direction_current_path) // NextPath = true, position > floor, up, "Up"
 					{
-						if(direction_current_path) // NextPath = true, position > floor, up, "Up"
-						{
-							if(down_path.isEmpty())
-							{
-								if(up_path.isEmpty())
-								{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
-								}else{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(floor-up_min));
-								}
-							}else{
-								if(up_path.isEmpty())
-								{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(down_max-current_max)+Math.abs(down_max-down_min)+Math.abs(floor-down_min));
-								}
-								else{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(down_max-current_max)+Math.abs(down_max-down_min)+Math.abs(down_min-up_min)+Math.abs(floor-up_min));
-								}
-							}
-						}else{ // NextPath = false, position > floor, up, "Up"
-							if(up_path.isEmpty())
-							{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
-								}
-								else{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
-								}
-							}else{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(floor-up_min));
-								}else{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(floor-up_min));
-								}
-							}
-						}
-					}else{ 
-						if(direction_current_path) // NextPath = true, position < floor, up, "Up"
+						if(down_path.isEmpty())
 						{
 							if(up_path.isEmpty())
 							{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(floor-Math.round(position)));
-								}else{
-									return(Math.abs(floor-Math.round(position)));
-								}
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
 							}else{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(floor-Math.round(position)));
-								}else{
-									return(Math.abs(floor-Math.round(position)));
-								}
-							}
-						}else{ // NextPath = false, position < floor, up, "Up"
-							if(up_path.isEmpty())
-							{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
-								}else{
-									System.out.println("Current_max=" + current_max + ",position=" + Math.round(position) + ",floor="+floor);
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
-								}
-							}else{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(floor-up_min));
-								}else{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(floor-up_min));
-								}
-							}
-						}
-					}
-				}else{
-					if(position > floor)
-					{
-						if(direction_current_path) // NextPath = true, position > floor, down, "Up"
-						{
-							if(up_path.isEmpty())
-							{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
-								}else{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-down_min)+Math.abs(floor-down_min));
-								}
-							}
-						}else{ // nextPath = false, position > floor, down, "Up
-							if(up_path.isEmpty())
-							{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
-								}else{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
-								}
-							}else{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(floor-up_min));
-								}else{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(floor-up_min));
-								}
-							}
-						}
-					}else{
-						if(direction_current_path) // nextPath = true, position < floor, down, "Up"
-						{
-							if(down_path.isEmpty())
-							{
-								if(up_path.isEmpty())
-								{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
-								}else{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(floor-up_min));
-								}
-							}else{
-								if(up_path.isEmpty())
-								{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-down_min)+Math.abs(floor-down_min));
-								}else{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-down_min)+Math.abs(down_min-up_min)+Math.abs(floor-up_min));
-								}
-							}
-						}else{ // nextPath = false, position < floor, down, "Up"
-							if(down_path.isEmpty())
-							{
-								if(up_path.isEmpty())
-								{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
-								}else{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(floor-up_min));
-								}
-							}else{
-								if(up_path.isEmpty())
-								{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
-								}else{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(floor-up_min));
-								}
-							}
-						}
-					}
-				}
-			}else{ // Not moving
-				return(Math.abs(Math.round(position)-floor));
-			}
-		}else{ // 
-			if(moving)
-			{
-				if(down)
-				{
-					if(position < floor)
-					{
-						if(direction_current_path) // nextPath = true, position < floor, down, "Down"
-						{
-							if(up_path.isEmpty())
-							{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
-								}else{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-floor));
-								}
-							}else{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
-								}else{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-floor));
-								}
-							}
-						}else{ // nextPath = false, position < floor, down, "Down"
-							if(up_path.isEmpty())
-							{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
-								}else{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-floor));
-								}
-							}else{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-floor));
-								}else{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-down_max)+Math.abs(down_max-floor));
-								}
-							}
-						}
-					}else{
-						if(direction_current_path) // nextPath = true, position > floor, down, "Down"
-						{
-							if(up_path.isEmpty())
-							{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
-								}else{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-floor));
-								}
-							}else{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
-								}else{
-									return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-floor));
-								}
-							}
-						}else{ // nextPath = false, position > floor, down, "Down"
-							if(up_path.isEmpty())
-							{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(Math.round(position)-floor));
-								}else{
-									return(Math.abs(Math.round(position)-floor));
-								}
-							}else{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(Math.round(position)-floor));
-								}else{
-									return(Math.abs(Math.round(position)-floor));
-								}
-							}
-						}
-					}
-				}else{
-					if(position < floor)
-					{
-						if(direction_current_path) // nextPath = true, position < floor, up, "Down"
-						{
-							if(up_path.isEmpty())
-							{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
-								}else{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
-								}
-							}else{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
-								}else{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
-								}
-							}
-						}else{ // nextPath = false, position < floor, up, "Down"
-							if(up_path.isEmpty())
-							{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
-								}else{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
-								}
-							}else{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-floor));
-								}else{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-down_max)+Math.abs(down_max-floor));
-								}
-							}
-						}
-					}else{
-						if(direction_current_path) // nextPath = true, position > floor, up, "Down"
-						{
-							if(up_path.isEmpty())
-							{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
-								}else{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
-								}
-							}else{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
-								}else{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
-								}
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(floor-up_min));
 							}
 						}else{
 							if(up_path.isEmpty())
 							{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
-								}else{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
+								return(Math.abs(current_max-Math.round(position))+Math.abs(down_max-current_max)+Math.abs(down_max-down_min)+Math.abs(floor-down_min));
+							}
+							else{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(down_max-current_max)+Math.abs(down_max-down_min)+Math.abs(down_min-up_min)+Math.abs(floor-up_min));
+							}
+						}
+					}else{ // NextPath = false, position > floor, up, "Up"
+						if(up_path.isEmpty())
+							{
+							if(down_path.isEmpty())
+							{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+							}
+							else{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
 								}
+						}else{
+							if(down_path.isEmpty())
+							{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(floor-up_min));
 							}else{
-								if(down_path.isEmpty())
-								{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-floor));
-								}else{
-									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-down_max) + Math.abs(down_max-floor));
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(floor-up_min));
+								}
+							}
+					}
+				}else{ //positon < floor
+					if(direction_current_path) // direction_current_path = true, position < floor, up, "Up"
+					{
+						//the current position is lower than floor which button is pressed, the people is on the same direction with current path
+						// no matter there is other tasks or not, only need count the distance between current position and people
+						return(Math.abs(floor-Math.round(position)));
+					}else{ // direction_current_path = false, position < floor, up, "Up"
+						if(up_path.isEmpty()) 
+						{ 
+							// no other task in the up direction, count distance on the way up to the top and down to the floor
+							return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+						}else{
+							//there is other tasks in the up direction
+							return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(floor-up_min));
+							}
+						}
+					}
+			}else if (moving && down){
+				if(position > floor)
+				{
+					if(direction_current_path) // direction_current_path = up, position > floor, elevator is moving up
+					{
+						if(up_path.isEmpty())
+						{
+							if(down_path.isEmpty())
+							{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+							}else{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-down_min)+Math.abs(floor-down_min));
+								}
+						}
+					}else{ // direction_current_path = down, position > floor, elevator is moving up
+						if(up_path.isEmpty())
+						{
+							//no task in up direction, event handle on the way down
+							return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+						}else{
+							//there is task in the up direction, handle them first
+							return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(floor-up_min));
+							}
+						}
+				}else{
+					if(direction_current_path) // direction_current_path = true, position < floor, down, "Up"
+					{
+						if(down_path.isEmpty())
+						{
+							if(up_path.isEmpty())
+							{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+							}else{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(floor-up_min));
+								}
+						}else{
+							if(up_path.isEmpty())
+							{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-down_min)+Math.abs(floor-down_min));
+							}else{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-down_min)+Math.abs(down_min-up_min)+Math.abs(floor-up_min));
+								}
+							}
+					}else{ // direction_current_path = false, position < floor, down, "Up"
+						if(down_path.isEmpty())
+						{
+							if(up_path.isEmpty())
+							{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+							}else{
+									return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(floor-up_min));
+								}
+						}else{
+							if(up_path.isEmpty())
+							{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+							}else{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(floor-up_min));
+								}
+							}
+						}
+					}
+			}else{ // Not moving
+				return(Math.abs(Math.round(position)-floor));
+				}
+		}else{ // the floor button pressed, with direction down
+			if(moving && down)
+			{
+				if(position < floor)
+				{
+					if(direction_current_path) // direction_current_path = up, position < floor, down, "Down"
+					{
+						if(up_path.isEmpty())
+						{
+							if(down_path.isEmpty())
+							{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+							}else{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-floor));
+								}
+						}else{
+							if(down_path.isEmpty())
+							{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+							}else{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-floor));
+								}
+							}
+					}else{ // direction_current_path = down, position < floor, down, "Down"
+						if(up_path.isEmpty())
+						{
+							if(down_path.isEmpty())
+							{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+							}else{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-floor));
+								}
+						}else{
+							if(down_path.isEmpty())
+							{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-floor));
+							}else{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(current_min-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-down_max)+Math.abs(down_max-floor));
+								}
+							}
+						}
+				}else{
+					if(direction_current_path) // direction_current_path = true, position > floor, down, "Down"
+					{
+						if(up_path.isEmpty())
+						{
+							if(down_path.isEmpty())
+							{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+							}else{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-floor));
+							}
+						}else{
+							if(down_path.isEmpty())
+							{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(floor-current_min));
+							}else{
+								return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-floor));
+								}
+							}
+					}else{ // direction_current_path = false, position > floor, down, "Down"
+						//event handle on the way down
+						return(Math.abs(Math.round(position)-floor));
+					}
+				}
+			}else if(moving && up)
+				{
+				if(position < floor)
+				{
+					if(direction_current_path) // nextPath = true, position < floor, up, "Down"
+					{
+						if(up_path.isEmpty())
+						{
+							if(down_path.isEmpty())
+							{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+							}else{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
+							}
+						}else{
+							if(down_path.isEmpty())
+							{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+							}else{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
+							}
+						}
+					}else{ // nextPath = false, position < floor, up, "Down"
+						if(up_path.isEmpty())
+						{
+							if(down_path.isEmpty())
+							{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+							}else{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
+							}
+						}else{
+							if(down_path.isEmpty())
+							{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-floor));
+							}else{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-down_max)+Math.abs(down_max-floor));
+							}
+						}
+					}
+				}else{
+					if(direction_current_path) // nextPath = true, position > floor, up, "Down"
+					{
+						if(up_path.isEmpty())
+						{
+							if(down_path.isEmpty())
+							{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+							}else{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
+									}
+						}else{
+							if(down_path.isEmpty())
+							{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+							}else{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
+								}
+						}
+					}else{
+						if(up_path.isEmpty())
+						{
+							if(down_path.isEmpty())
+							{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
+							}else{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
+								}
+						}else{
+							if(down_path.isEmpty())
+							{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-floor));
+							}else{
+								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(up_max-up_min)+Math.abs(up_max-down_max) + Math.abs(down_max-floor));
 								}
 							}
 						}
 					}
 				}
-			}else{ // Not moving
+			else{ // Not moving
 				return(Math.abs(Math.round(position)-floor));
 			}
 		}
