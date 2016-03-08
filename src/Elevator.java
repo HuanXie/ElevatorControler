@@ -118,19 +118,19 @@ public class Elevator extends Thread{
 		}
 	}
 	
-	/*function score calculate the length of way from the current position of elevator to
-	 * the destination of the new event*/
+	// Score function returns how much floors elevator must go before going to this specific floor. We have all task in current-,up
+	// and down-path. So based on current path, moving direction and maximum and minimum in each path we can calculate the difference.
 	public synchronized int score(int floor, String direction)
 	{
 		int up_max = floor;
 		int down_max = 0;
-		if(direction.equals("Up"))  // up button pressed
+		if(direction.equals("Up"))  // Up button pressed
 		{
-			if(moving && up) //elevator is moving up
+			if(moving && up) // Elevator is moving up
 			{
 				if(position > floor) // The current position of elevator is higher than the floor which button is pressed
 				{
-					if(direction_current_path) // direction_current_path = up, position > floor, event = up button pressed
+					if(direction_current_path) // Direction_current_path = up, position > floor, event = up button pressed
 					{
 						if(down_path.isEmpty())  
 						{
@@ -149,7 +149,7 @@ public class Elevator extends Thread{
 								return(Math.abs(current_max-Math.round(position))+Math.abs(down_max-current_max)+Math.abs(down_max-down_min)+Math.abs(down_min-up_min)+Math.abs(floor-up_min));
 							}
 						}
-					}else{ // direction_current_path = down, position > floor, event = up button pressed
+					}else{ // Direction_current_path = down, position > floor, event = up button pressed
 						if(up_path.isEmpty())
 							{
 							if(down_path.isEmpty())
@@ -168,19 +168,19 @@ public class Elevator extends Thread{
 								}
 							}
 					}
-				}else{ //positon < floor
-					if(direction_current_path) // direction_current_path = up, position < floor, up, "Up"
+				}else{ // Positon < floor
+					if(direction_current_path) // Direction_current_path = up, position < floor, up, "Up"
 					{
-						//the current position is lower than floor which button is pressed, the people is on the same direction with current path
+						// The current position is lower than floor which button is pressed, the people is on the same direction with current path
 						// no matter there is other tasks or not, only need count the distance between current position and people
 						return(Math.abs(floor-Math.round(position)));
-					}else{ // direction_current_path = down, position < floor, up, "Up"
+					}else{ // Direction_current_path = down, position < floor, up, "Up"
 						if(up_path.isEmpty()) 
 						{ 
-							// no other task in the up direction, count distance on the way up to the top and down to the floor
+							// No other task in the up direction, count distance on the way up to the top and down to the floor
 							return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
 						}else{
-							//there is other tasks in the up direction
+							// There is other tasks in the up direction
 							return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-up_min)+Math.abs(floor-up_min));
 							}
 						}
@@ -188,7 +188,7 @@ public class Elevator extends Thread{
 			}else if (moving && down){  
 				if(position > floor)
 				{
-					if(direction_current_path) // direction_current_path = up, position > floor, elevator is moving up
+					if(direction_current_path) // Direction_current_path = up, position > floor, elevator is moving up
 					{
 						if(up_path.isEmpty())
 						{
@@ -199,7 +199,7 @@ public class Elevator extends Thread{
 								return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-down_min)+Math.abs(floor-down_min));
 								}
 						}
-					}else{ // direction_current_path = down, position > floor, elevator is moving up
+					}else{ // Direction_current_path = down, position > floor, elevator is moving up
 						if(up_path.isEmpty())
 						{
 							//no task in up direction, event handle on the way down
@@ -210,7 +210,7 @@ public class Elevator extends Thread{
 							}
 						}
 				}else{
-					if(direction_current_path) // direction_current_path = up, position < floor,  elevator moving down, event = up button pressed
+					if(direction_current_path) // Direction_current_path = up, position < floor,  elevator moving down, event = up button pressed
 					{
 						if(down_path.isEmpty())
 						{
@@ -228,7 +228,7 @@ public class Elevator extends Thread{
 								return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-down_min)+Math.abs(down_min-up_min)+Math.abs(floor-up_min));
 								}
 							}
-					}else{ // direction_current_path = down, position < floor
+					}else{ // Direction_current_path = down, position < floor
 						if(down_path.isEmpty())
 						{
 							if(up_path.isEmpty())
@@ -250,12 +250,12 @@ public class Elevator extends Thread{
 			}else{ // Not moving
 				return(Math.abs(Math.round(position)-floor));
 				}
-		}else{ // the floor button pressed, with direction down
+		}else{ // The floor button pressed, with direction down
 			if(moving && down)
 			{
 				if(position < floor)
 				{
-					if(direction_current_path) // direction_current_path = up, position < floor, down, "Down"
+					if(direction_current_path) // Direction_current_path = up, position < floor, down, "Down"
 					{
 						if(up_path.isEmpty())
 						{
@@ -273,7 +273,7 @@ public class Elevator extends Thread{
 								return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-floor));
 								}
 							}
-					}else{ // direction_current_path = down, position < floor, down, "Down"
+					}else{ // Direction_current_path = down, position < floor, down, "Down"
 						if(up_path.isEmpty())
 						{
 							if(down_path.isEmpty())
@@ -292,7 +292,7 @@ public class Elevator extends Thread{
 							}
 						}
 				}else{
-					if(direction_current_path) // direction_current_path = up, position > floor, down, "Down"
+					if(direction_current_path) // Direction_current_path = up, position > floor, down, "Down"
 					{
 						if(up_path.isEmpty())
 						{
@@ -310,16 +310,16 @@ public class Elevator extends Thread{
 								return(Math.abs(Math.round(position)-current_min)+Math.abs(down_max-current_min)+Math.abs(down_max-floor));
 								}
 							}
-					}else{ // direction_current_path = down, position > floor, down, "Down"
-						//event handle on the way down
+					}else{ // Direction_current_path = down, position > floor, down, "Down"
+						// Event handle on the way down
 						return(Math.abs(Math.round(position)-floor));
 					}
 				}
-			}else if(moving && up)  //elevator elevator is moving up 
+			}else if(moving && up)  // Elevator elevator is moving up 
 				{
 				if(position < floor)
 				{
-					if(direction_current_path) // direction_current_path = up, position < floor, up, "Down"
+					if(direction_current_path) // Direction_current_path = up, position < floor, up, "Down"
 					{
 						if(up_path.isEmpty())
 						{
@@ -337,7 +337,7 @@ public class Elevator extends Thread{
 								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
 							}
 						}
-					}else{ // direction_current_path = down, position < floor, up, "Down"
+					}else{ // Direction_current_path = down, position < floor, up, "Down"
 						if(up_path.isEmpty())
 						{
 							if(down_path.isEmpty())
@@ -356,7 +356,7 @@ public class Elevator extends Thread{
 						}
 					}
 				}else{
-					if(direction_current_path) // direction_current_path = up, position > floor, up, "Down"
+					if(direction_current_path) // Direction_current_path = up, position > floor, up, "Down"
 					{
 						if(up_path.isEmpty())
 						{
@@ -374,7 +374,7 @@ public class Elevator extends Thread{
 								return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
 								}
 						}
-					}else{  // direction_current_path = down, position > floor, moving up, event= "Down"
+					}else{  // Direction_current_path = down, position > floor, moving up, event= "Down"
 						if(up_path.isEmpty())
 						{
 							if(down_path.isEmpty())
