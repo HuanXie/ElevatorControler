@@ -2,29 +2,29 @@ import java.util.Collections;
 import java.util.concurrent.PriorityBlockingQueue;
 
 public class Elevator extends Thread{
-	int id;
-	int floor;
-	float position; //current position of elevator
-	boolean moving;  //status of elevator: moving or not
-	boolean up;  //status of elevator: moving up or not
-	boolean down; //status of elevator: moving down or not
-	boolean newEvent; //new event trigger
+	int id; // ID of this elevator
+	int floor; // Number of floors
+	float position; // Current position of elevator
+	boolean moving;  // Status of elevator: moving or not
+	boolean up;  // Status of elevator: moving up or not
+	boolean down; // Status of elevator: moving down or not
+	boolean newEvent; // New event trigger
 	boolean direction_current_path; // True when current == up_path, false when current == down_path
-	boolean wakeUp;
+	boolean wakeUp; // Alarm object to control wake up time of elevator
 	Alarm alarm;  //help object to ask thread sleep without holding lock in hand
-	MainController controller;
-	PriorityBlockingQueue<Integer> up_path;  //when floor button with direction up is pressed, put it in queue up_path
-	PriorityBlockingQueue<Integer> down_path; //when floor button with direction down is pressed, put it in queue down_path
-	PriorityBlockingQueue<Integer> current_path; //current path elevator is used
-	Floorbutton[] floorButtons;
-	int current_max;
-	int current_min;
-	int down_max;
-	int down_min;
-	int up_max;
-	int up_min;
+	MainController controller; // Main controller of elevators
+	PriorityBlockingQueue<Integer> up_path;  // When floor button with direction up is pressed, put it in queue up_path
+	PriorityBlockingQueue<Integer> down_path; // When floor button with direction down is pressed, put it in queue down_path
+	PriorityBlockingQueue<Integer> current_path; // Current path elevator is used
+	Floorbutton[] floorButtons; // Button at each floor to simulate if any of them are pressed
+	int current_max; // Maximum floor in current_path
+	int current_min; // Minimum floor in current_path
+	int down_max; // Maximum floor in down_path
+	int down_min; // Minimum floor in down_path
+	int up_max; // Maximum floor in up_path
+	int up_min; // Minimum floor in up_path
 	
-	// Constructor, setting all to false
+	// Constructor, setting all to false and initialize everything
 	Elevator(int id, int floor, MainController controller)
 	{ 
 		this.id = id;
@@ -53,6 +53,7 @@ public class Elevator extends Thread{
 		}
 	}
 	
+	// Stop the elevator and reinitialize everything
 	public synchronized void stopElevator()
 	{
 		controller.stop(id);
@@ -73,10 +74,12 @@ public class Elevator extends Thread{
 		alarm.start();
 	}
 	
+	// Returns if elevator is moving
 	public synchronized boolean isMoving(){
 		return moving;
 	}
 
+	// Update current_max or current_min if necessary
 	private synchronized void updateCurrent(int floor)
 	{
 		if(floor > current_max)
@@ -89,6 +92,7 @@ public class Elevator extends Thread{
 		}
 	}
 	
+	// Update up_max or up_min if necessary
 	private synchronized void updateUp(int floor)
 	{
 		if(floor > up_max)
@@ -101,6 +105,7 @@ public class Elevator extends Thread{
 		}
 	}
 	
+	// Update down_max or down_min if necessary
 	private synchronized void updateDown(int floor)
 	{
 		if(floor > down_max)
@@ -442,15 +447,17 @@ public class Elevator extends Thread{
 		return 0;
 	}
 	
+	// Used in alarm to wake up this thread
 	public synchronized void wakeUp(){
 		wakeUp = true;
 		notifyAll();
 	}
 	
-	/*elevators position is updated all the time, but notify elevator when a certain floor is reached*/
+	// Elevators position is updated all the time, but notify elevator when a certain floor is reached
 	public synchronized void updatePosition(float position)
 	{
 		this.position = position;
+		// If we are at certain floor, notify
 		if(Math.abs(position-Math.round(position)) < 0.04)
 		{
 			System.out.println("Elevator " + id + " at " + Math.round(position) + " floor");
@@ -458,136 +465,136 @@ public class Elevator extends Thread{
 		}
 	}
 	
-	/*floorButtonPressed function call by controller when new event is dispatched to a certain elevator thread*/
+	// FloorButtonPressed function call by controller when new event assigned to this elevator
 	public synchronized void floorButtonPressed(int floor, String direction)
 	{
-		if(direction.equals("Up"))  //up floor button is pressed
+		if(direction.equals("Up"))  // Up floor button is pressed
 		{
-			floorButtons[floor].up = true;
+			floorButtons[floor].up = true; // Set this floorbutton to true
 			if(moving)  
 			{
-				if(up)  //elevator is moving up
+				if(up)  // Elevator is moving up
 				{
-					//the current position of elevator is higher than the floor which button is pressed
-					//we will ignore it this time, and put it in the next up path
+					// The current position of elevator is higher than the floor which button is pressed
+					// We will ignore it this time, and put it in the next up path
 					if(position > floor)  
 					{
 						add_up_path(floor);
-					}else{  //the current position is lower than floor which button is pressed
+					}else{  // The current position is lower than floor which button is pressed
 						
-						if(direction_current_path) //the current path is up_path, we will give them a ride, put event in current path
+						if(direction_current_path) // The current path is up_path, we will give them a ride, put event in current path
 						{
 							add_current_path(floor);
-						}else{ // the current path is down_path, different direction we have, so ignore it this time
+						}else{ // The current path is down_path, different direction we have, so ignore it this time
 							add_up_path(floor);
 						}
 					}
-				}else{  //elevator is moving down
-					if(position > floor) //the current position of elevator is higher than the floor which button is pressed
+				}else{  // Elevator is moving down
+					if(position > floor) // The current position of elevator is higher than the floor which button is pressed
 					{
-						if(direction_current_path) //the current path is up_path, elevator will move up again, so give them a ride
+						if(direction_current_path) // The current path is up_path, elevator will move up again, so give them a ride
 						{
 							add_current_path(floor);
-						}else{ //different direction, up next time
+						}else{ // Different direction, up next time
 							add_up_path(floor);
 						}
-					}else{ //the current position is lower than floor which button is pressed, up next time
+					}else{ // The current position is lower than floor which button is pressed, up next time
 						add_up_path(floor);
 					}
 				}
-			}else{ //elevator is not moving
+			}else{ // Elevator is not moving
 				add_up_path(floor);
 			}
-		}else{ // the floor button pressed, with direction down
-			floorButtons[floor].down = true;
+		}else{ //  The floor button pressed, with direction down
+			floorButtons[floor].down = true; // Set this floorbutton to true
 			if(moving)
 			{
-				if(down)  //the elevator is moving down
+				if(down)  // The elevator is moving down
 				{
-					if(position < floor) //the current position is lower than floor which button is pressed, down next time 
+					if(position < floor) // The current position is lower than floor which button is pressed, down next time 
 					{
 						add_down_path(floor);
-					}else{ //the current position is higher than floor which button is pressed,
-						if(!direction_current_path) //current path is down path, give him a ride
+					}else{ // The current position is higher than floor which button is pressed,
+						if(!direction_current_path) // Current_path is down_path, give him a ride
 						{
 							add_current_path(floor);
-						}else{ //current path is up path, different direction, down next time
+						}else{ // Current path is up path, different direction, down next time
 							add_down_path(floor);
 						}
 					}
-				}else{  //the elevator is moving up
-					if(position < floor) //the current position is lower than floor which button is pressed
+				}else{  // The elevator is moving up
+					if(position < floor) // The current position is lower than floor which button is pressed
 					{
-						if(!direction_current_path) //current path is down path, elevator will go down, give him a ride
+						if(!direction_current_path) // Current path is down path, elevator will go down, give him a ride
 						{
 							add_current_path(floor);
-						}else{ //current path is up path, down next time
+						}else{ // Current path is up path, down next time
 							add_down_path(floor);
 						}
-					}else{  //the current position is higher than floor which button is pressed
+					}else{  // The current position is higher than floor which button is pressed
 						add_down_path(floor);
 					}
 				}
-			}else{  //elevator is not moving
+			}else{  // Elevator is not moving
 				add_down_path(floor);
 			}
 		}
-		newEvent = true; //set flag this is a new event
+		newEvent = true; // Set flag this is a new event
 		notifyAll();
 	}
 	
 	
-	/*This function deal with the event which is triggered by button in elevator*/
+	// This function deal with the event which is triggered by button in elevator
 	public synchronized void controlButtonPressed(int floor)
 	{
 		System.out.println("Someone at elevator " + id + " pressed " + floor + " floor");
 		if(moving)  
 		{
-			if(up) //elevator moving up
+			if(up) // Elevator moving up
 			{
-				if(floor > position)  //passenger will go up
+				if(floor > position)  // Passenger wants to go up
 				{
-					if(direction_current_path)  //current path is up path, give him a ride
+					if(direction_current_path)  // Current path is up_path, give him a ride
 					{
 						add_current_path(floor);
-					}else{  //current path is down path, wait in up path
+					}else{  // Current path is down path, wait in up_path
 						add_up_path(floor);
 					}
-				}else{   //passenger will do down
-					if(direction_current_path)  //current path is up path, wait in down path
+				}else{   // Passenger wants to go down
+					if(direction_current_path)  // Current path is up path, wait in down path
 					{
 						add_down_path(floor);
-					}else{ //current path is down path, give him a ride
+					}else{ // Current path is down path, give him a ride
 						add_current_path(floor);
 					}
 				}
-			}else{  //elevator moving down
-				if(floor < position)  //passenger will go down
+			}else{  // Elevator moving down
+				if(floor < position)  // Passenger wants go down
 				{
-					if(direction_current_path)  //current path is up path, wait in down path
+					if(direction_current_path)  // Current path is up path, wait in down path
 					{
 						add_down_path(floor);
-					}else{ //current path is down path, give him a ride
+					}else{ // Current path is down path, give him a ride
 						add_current_path(floor);
 					}
-				}else{ //passenger will go up
-					if(direction_current_path)  //current path is up path, give him a ride
+				}else{ // Passenger wants to go up
+					if(direction_current_path)  // Current path is up path, give him a ride
 					{
 						add_current_path(floor);
-					}else{ //current path is down path, wait in up path
+					}else{ // Current path is down path, wait in up path
 						add_up_path(floor);
 					}
 				}
 			}
-		}else{ //elevator is not moving
-			if(position > floor)  //passenger will go down
+		}else{ // Elevator is not moving
+			if(position > floor)  // Passenger wants to go down
 			{
 				add_down_path(floor);
-			}else{ //passenger will go up
+			}else{ // Passenger wants to go up
 				add_up_path(floor);
 			}
 		}
-		newEvent = true; //new event trigger
+		newEvent = true; // New event trigger
 		notifyAll();
 	}
 	
@@ -597,156 +604,156 @@ public class Elevator extends Thread{
 		{
 			while(true)
 			{
-				while(!newEvent && !moving) //there is no new event and elevator is not moving
+				while(!newEvent && !moving) // There is no new event and elevator is not moving
 				{
 					synchronized(this)
 					{
-						wait();
+						wait(); // We wait for any notify
 					}
 			}
-			synchronized(this)  //wake up if new event trigger
+			synchronized(this)  // Wake up if new event trigger
 			{
-				newEvent = false; //reset
-				if(!moving) //elevator is waiting
+				newEvent = false; // Reset flag
+				if(!moving) // Elevator is waiting
 				{
-					if(up_path.isEmpty())  //new down event
+					if(up_path.isEmpty())  // New down event
 					{
-						//read new even and compare with current position of elevator
-						if(down_path.peek() > position)  //elevator position is lower than floor
+						// Read new event and compare with current position of elevator
+						if(down_path.peek() > position)  // Elevator position is lower than floor
 						{
-							
-							controller.up(id); //move N'th elevator upwards
+							controller.up(id); // Move elevator upwards
 							moving = true;
 							down = false;
 							up = true;
-						}else{ //elevator position is higher than floor
-							controller.down(id); //move N'th elevator downwards
+						}else{ // Elevator position is higher than floor
+							controller.down(id); // Move elevator downwards
 							moving = true;
 							down = true;
 							up = false;
 						}
 						System.out.println("Elevator " + id + " current path is down");
 						direction_current_path = false; //set flag of current path to down
-						current_path = new PriorityBlockingQueue<Integer>(down_path);
-						current_max = down_max;
-						current_min = down_min;
-						down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder());
-						down_max = 0;
-						down_min = floor;
-					}else{//new up event
-						if(up_path.peek() > position) //elevator position is lower than floor
+						current_path = new PriorityBlockingQueue<Integer>(down_path); // Copy down_path to current_path
+						current_max = down_max; // Update current_max
+						current_min = down_min; // Update current_min
+						down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder()); // Reset down_path
+						down_max = 0; // Reset down_max
+						down_min = floor; // Reset down_min
+					}else{ // New up event
+						if(up_path.peek() > position) // Elevator position is lower than floor
 						{
-							controller.up(id); //move N'th elevator upwards
+							controller.up(id); // Move elevator upwards
 							moving = true;
 							up = true;
 							down = false;
-						}else{ //elevator position is higher than floor
-							controller.down(id); //move N'th elevator downwards
+						}else{ // Elevator position is higher than floor
+							controller.down(id); // Move elevator downwards
 							moving = true;
 							up = false;
 							down = true;
 						}
-						direction_current_path = true; //set flag of current path to up
+						direction_current_path = true; // Set flag of current path to up
 						System.out.println("Elevator " + id + " current path is up");
-						current_path = new PriorityBlockingQueue<Integer>(up_path);
-						current_max = up_max;
-						current_min = up_min;
-						up_path = new PriorityBlockingQueue<Integer>();
-						up_max = 0;
-						up_min = floor;
+						current_path = new PriorityBlockingQueue<Integer>(up_path); // Copy up_path to current_path
+						current_max = up_max; // Update current_max
+						current_min = up_min; // Update up_min
+						up_path = new PriorityBlockingQueue<Integer>(); // Reset up_path
+						up_max = 0; // Reset up_max
+						up_min = floor; // Reset up_min
 					}
-				}else{ //elevator is not moving
+				}else{ // Else elevator is moving
+					// We wait until we reach any floor
 					while(Math.abs(position-Math.round(position)) > 0.04)
 					{
 						wait();
 					}
-					if(Math.abs(current_path.peek()-Math.round(position)) < 0.04) //position of elevator get close to a certain floor
+					if(Math.abs(current_path.peek()-Math.round(position)) < 0.04) // Check if we have to stop at this floor
 					{
-						controller.stop(id); //ask elevator to stop for a while
-						controller.openDoor(id); //open door
-						alarm.sleep(2000); //wait 2 seconds
+						controller.stop(id); // Ask elevator to stop for a while
+						controller.openDoor(id); // Open door
+						alarm.sleep(2000); // Wait 2 seconds
 						while(!wakeUp) 
 						{
 							wait(); 
 						}
 						wakeUp = false;
-						controller.closeDoor(id); //close door
-						alarm.sleep(2000);
+						controller.closeDoor(id); // Close door
+						alarm.sleep(2000); // Wait 2 seconds
 						while(!wakeUp)
 						{
 							wait();
 						}
 						wakeUp = false;
-						int i = current_path.remove();
-						if(direction_current_path)
+						int i = current_path.remove(); // Remove that floor and update floorbuttons for itself and at controller
+						if(direction_current_path) // If we are using up_path
 						{
-							floorButtons[i].up = false;
-							controller.done(i, true);
+							floorButtons[i].up = false; // Up button at this floor is turned off
+							controller.done(i, true); // Up button at this floor in controller is turned off
 						}else{
-							floorButtons[i].down = false;
-							controller.done(i, false);
+							floorButtons[i].down = false; // Down button at this floor is turned off
+							controller.done(i, false); // Down button at this floor in controller is turned off
 						}
-						if(current_path.isEmpty())  //change direction of path
+						if(current_path.isEmpty())  // No more task in current_path
 						{
-							if(direction_current_path)  //current path is up
+							if(direction_current_path)  // Current path is up
 							{
-								if(!down_path.isEmpty()) //waiting task in down path,set current path to down path
+								if(!down_path.isEmpty()) // Switch path and check if down_path is empty
 								{
-									current_path = new PriorityBlockingQueue<Integer>(down_path);
-									current_max = down_max;
-									current_min = down_min;
-									down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder());
-									down_max = 0;
-									down_min = floor;
-									direction_current_path = false;
-									pick_up_passenger(current_path, position);
-								}else{  //no task in down path
-									if(!up_path.isEmpty()) //task in up path
+									current_path = new PriorityBlockingQueue<Integer>(down_path); // Copy down_path to current_path
+									current_max = down_max; // Update current_max
+									current_min = down_min; // Update current_min
+									down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder()); // Reset down_path
+									down_max = 0; // Reset down_max
+									down_min = floor; // Reset down_min
+									direction_current_path = false; // Current path is now down_path
+									moveToNextFloor(current_path, position);
+								}else{  // No task in down_path
+									if(!up_path.isEmpty()) // Check for task in up_path
 									{
-										current_path = new PriorityBlockingQueue<Integer>(up_path);
-										current_max = up_max;
-										current_min = up_min;
-										up_path = new PriorityBlockingQueue<Integer>();
-										up_max = 0;
-										up_min = floor;
-										direction_current_path = true;
-										pick_up_passenger(current_path, position);
-									}else{ // no task anymore
+										current_path = new PriorityBlockingQueue<Integer>(up_path); // Copy up_path to current_path
+										current_max = up_max; // Update current_max
+										current_min = up_min; // Update current_min
+										up_path = new PriorityBlockingQueue<Integer>(); // Reset up_path
+										up_max = 0; // Reset up_max
+										up_min = floor; // Rest up_min
+										direction_current_path = true; // Current path is up_path
+										moveToNextFloor(current_path, position); // Move to next floor in current_path
+									}else{ // No task anymore, elevator is not moving
 										moving = false;
 										up = false;
 										down = false;
 									}
 								}
-							}else{  //current path is down
-								if(!up_path.isEmpty()){   //more task in up path
-									current_path = new PriorityBlockingQueue<Integer>(up_path);
-									current_max = up_max;
-									current_min = up_min;
-									up_path = new PriorityBlockingQueue<Integer>();
-									up_max = 0;
-									up_min = floor;
-									direction_current_path = true;
-									pick_up_passenger(current_path, position);
-								}else{ //no task in up path
-									if(!down_path.isEmpty()) //more task in down path
+							}else{  // Else current_path is down_path
+								if(!up_path.isEmpty()){   // Check for more task in up_path
+									current_path = new PriorityBlockingQueue<Integer>(up_path); // Copy up_path to current_path
+									current_max = up_max; // Update current_max
+									current_min = up_min; // Update current_min
+									up_path = new PriorityBlockingQueue<Integer>(); // Reset up_path
+									up_max = 0; // Reset up_max
+									up_min = floor; // Reset up_min
+									direction_current_path = true; // Current_path is up_path
+									moveToNextFloor(current_path, position); // Move to next floor in current_path
+								}else{ // Else no task in up path, continue using up
+									if(!down_path.isEmpty()) // Check if there are more task in down path
 									{
-										current_path = new PriorityBlockingQueue<Integer>(up_path);
-										current_max = up_max;
-										current_min = up_min;
-										up_path = new PriorityBlockingQueue<Integer>();
-										up_max = 0;
-										up_min = floor;
-										direction_current_path = false;
-										pick_up_passenger(current_path, position);
-									}else{ //no more task to do
+										current_path = new PriorityBlockingQueue<Integer>(down_path); // Copy down_path to current_path
+										current_max = down_max; // Update current_max
+										current_min = down_min; // Update current_min
+										down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder()); // Reset down_path
+										down_max = 0; // Reset down_max
+										down_min = floor; // Reset down_min
+										direction_current_path = false; // Current path is now down_path
+										moveToNextFloor(current_path, position);
+									}else{ // No more task to do, elevator is not moving
 										moving = false;
 										up = false;
 										down = false;
 									}
 								}
 							}
-						}else{ //has other tasks to do
-							pick_up_passenger(current_path, position);
+						}else{ // Else current_path is not empyt, more task
+							moveToNextFloor(current_path, position);
 						}
 					}
 				}
@@ -755,6 +762,7 @@ public class Elevator extends Thread{
 		}catch(InterruptedException e){}
 	}
 	
+	// Add this floor to up_path
 	private synchronized void add_up_path(int floor)
 	{
 		System.out.println("Elevator " + id + ". Add this request to up_path");
@@ -765,6 +773,7 @@ public class Elevator extends Thread{
 		}
 	}
 	
+	// Add this floor to down_path
 	private synchronized void add_down_path(int floor)
 	{
 		System.out.println("Elevator " + id + ". Add this request to down_path");
@@ -775,6 +784,7 @@ public class Elevator extends Thread{
 		}
 	}
 	
+	// Add this floor to current_path
 	private synchronized void add_current_path(int floor)
 	{
 		System.out.println("Elevator " + id + ". Add this request to current_path");
@@ -785,16 +795,17 @@ public class Elevator extends Thread{
 		}
 	}
 	
-	private synchronized void pick_up_passenger(PriorityBlockingQueue<Integer> current_path, float position)
+	// Move to next floor at current_path
+	private synchronized void moveToNextFloor(PriorityBlockingQueue<Integer> current_path, float position)
 	{
-		if(current_path.peek() > position)  //position lower than calling floor
+		if(current_path.peek() > position)  // Position lower than calling floor
 		{
-			controller.up(id); //move upwards
+			controller.up(id); // Move upwards
 			moving = true;
 			up = true;
 			down = false;
-		}else{  //position higher than calling floor
-			controller.down(id); //move downwards
+		}else{  // Position higher than calling floor
+			controller.down(id); // Move downwards
 			moving = true;
 			down = true;
 			up = false;
