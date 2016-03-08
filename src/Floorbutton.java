@@ -1,7 +1,8 @@
 public class Floorbutton {
-	public boolean up;
-	public boolean down;
+	public boolean up; // If up button at this floor is pressed
+	public boolean down; // If down button at this floor is pressed
 	
+	// Constructor, initially all button are not pressed
 	Floorbutton()
 	{
 		up = false;
