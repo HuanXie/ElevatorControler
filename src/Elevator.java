@@ -16,6 +16,7 @@ public class Elevator extends Thread{
 	PriorityBlockingQueue<Integer> up_path;  //when floor button with direction up is pressed, put it in queue up_path
 	PriorityBlockingQueue<Integer> down_path; //when floor button with direction down is pressed, put it in queue down_path
 	PriorityBlockingQueue<Integer> current_path; //current path elevator is used
+	Floorbutton[] floorButtons;
 	int current_max;
 	int current_min;
 	int down_max;
@@ -45,6 +46,11 @@ public class Elevator extends Thread{
 		down_min = floor;
 		up_max = 0;
 		up_min = floor;
+		floorButtons = new Floorbutton[floor+1];
+		for(int i = 0; i < floorButtons.length; i++)
+		{
+			floorButtons[i] = new Floorbutton();
+		}
 	}
 	
 	public synchronized void stopElevator()
@@ -458,6 +464,7 @@ public class Elevator extends Thread{
 	{
 		if(direction.equals("Up"))  //up floor button is pressed
 		{
+			floorButtons[floor].up = true;
 			if(moving)  
 			{
 				if(up)  //elevator is moving up
@@ -493,6 +500,7 @@ public class Elevator extends Thread{
 				add_up_path(floor);
 			}
 		}else{ // the floor button pressed, with direction down
+			floorButtons[floor].down = true;
 			if(moving)
 			{
 				if(down)  //the elevator is moving down
@@ -670,7 +678,15 @@ public class Elevator extends Thread{
 							wait();
 						}
 						wakeUp = false;
-						current_path.remove(); //finish task
+						int i = current_path.remove();
+						if(direction_current_path)
+						{
+							floorButtons[i].up = false;
+							controller.done(i, true);
+						}else{
+							floorButtons[i].down = false;
+							controller.done(i, false);
+						}
 						if(current_path.isEmpty())  //change direction of path
 						{
 							if(direction_current_path)  //current path is up
