@@ -1,28 +1,22 @@
 import java.util.LinkedList;
-import java.util.Scanner;
 
-public class MainController{
-	static Courier c;
-	static Elevator[] elevators;
+public class MainController extends Thread{
+	Courier c;
+	Elevator[] elevators;
+	int numberOfElevators;
+	int numberOfFloors;
 	
-	public static void main(String[] args)
+	
+	MainController(int numberOfElevators, int numberOfFloors, Elevator[] elevators)
 	{
+		this.numberOfElevators = numberOfElevators;
+		this.numberOfFloors = numberOfFloors;
+		this.elevators = elevators;
 		c = new Courier();
-		
-		Scanner s = new Scanner(System.in);
-		System.out.println("Number of elevators? ");
-		int total = s.nextInt();
-		System.out.println("Floor? ");
-		int floor = s.nextInt();
-		s.close();
-		
-		elevators = new Elevator[total];
-		for(int i = 0; i < total; i++)
-		{
-			elevators[i] = new Elevator(i+1,floor);
-			elevators[i].start();
-		}
-		
+	}
+	
+	public void run()
+	{		
 		String m;
 		while(true)
 		{
@@ -31,32 +25,32 @@ public class MainController{
 		}
 	}
 	
-	public synchronized static void up(int ID)
+	public synchronized void up(int ID)
 	{
 		c.send("m" + " " + ID + " " + "1");
 	}
 	
-	public synchronized static void stop(int ID)
+	public synchronized void stop(int ID)
 	{
 		c.send("m" + " " + ID + " " + "0");
 	}
 	
-	public synchronized static void down(int ID)
+	public synchronized void down(int ID)
 	{
 		c.send("m" + " " + ID + " " + "-1");
 	}
 	
-	public synchronized static void openDoor(int ID)
+	public synchronized void openDoor(int ID)
 	{
 		c.send("d" + " " + ID + " " + "1");
 	}
 	
-	public synchronized static void closeDoor(int ID)
+	public synchronized void closeDoor(int ID)
 	{
 		c.send("d" + " " + ID + " " + "-1");
 	}
 	
-	private static void messageParser(String message)
+	private void messageParser(String message)
 	{
 		String[] parts = message.split(" ");
 		int i;
@@ -104,7 +98,12 @@ public class MainController{
 			case "p":
 			{
 				i = Integer.parseInt(parts[1]);
-				elevators[i-1].controlButtonPressed(Integer.parseInt(parts[2]));
+				if(Integer.parseInt(parts[2]) == 32000)
+				{
+					elevators[i-1].stopElevator();
+				}else{
+					elevators[i-1].controlButtonPressed(Integer.parseInt(parts[2]));
+				}
 				break;
 			}
 			case "v":

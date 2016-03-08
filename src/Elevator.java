@@ -12,6 +12,7 @@ public class Elevator extends Thread{
 	boolean direction_current_path; // True when current == up_path, false when current == down_path
 	boolean wakeUp;
 	Alarm alarm;  //help object to ask thread sleep without holding lock in hand
+	MainController controller;
 	PriorityBlockingQueue<Integer> up_path;  //when floor button with direction up is pressed, put it in queue up_path
 	PriorityBlockingQueue<Integer> down_path; //when floor button with direction down is pressed, put it in queue down_path
 	PriorityBlockingQueue<Integer> current_path; //current path elevator is used
@@ -23,10 +24,11 @@ public class Elevator extends Thread{
 	int up_min;
 	
 	// Constructor, setting all to false
-	Elevator(int id, int floor)
+	Elevator(int id, int floor, MainController controller)
 	{ 
 		this.id = id;
 		this.floor = floor;
+		this.controller = controller;
 		position = 0f;
 		moving = false;
 		up = false;
@@ -43,6 +45,26 @@ public class Elevator extends Thread{
 		down_min = floor;
 		up_max = 0;
 		up_min = floor;
+	}
+	
+	public synchronized void stopElevator()
+	{
+		controller.stop(id);
+		up_path = new PriorityBlockingQueue<Integer>();
+		down_path = new PriorityBlockingQueue<Integer>(11, Collections.reverseOrder());
+		current_max = 0;
+		current_min = floor;
+		down_max = 0;
+		down_min = floor;
+		up_max = 0;
+		up_min = floor;
+		moving = false;
+		up = false;
+		down = false;
+		newEvent = false;
+		wakeUp = false;
+		alarm = new Alarm(this);
+		alarm.start();
 	}
 	
 	public synchronized boolean isMoving(){
@@ -426,7 +448,7 @@ public class Elevator extends Thread{
 		this.position = position;
 		if(Math.abs(position-Math.round(position)) < 0.04)
 		{
-			System.out.println("At " + Math.round(position) + " floor");
+			System.out.println("Elevator " + id + " at " + Math.round(position) + " floor");
 			notifyAll();
 		}
 	}
@@ -434,7 +456,6 @@ public class Elevator extends Thread{
 	/*floorButtonPressed function call by controller when new event is dispatched to a certain elevator thread*/
 	public synchronized void floorButtonPressed(int floor, String direction)
 	{
-		System.out.println("At " + floor + " floor someone pressed " + direction);
 		if(direction.equals("Up"))  //up floor button is pressed
 		{
 			if(moving)  
@@ -512,7 +533,7 @@ public class Elevator extends Thread{
 	/*This function deal with the event which is triggered by button in elevator*/
 	public synchronized void controlButtonPressed(int floor)
 	{
-		System.out.println("Someone at elevator pressed " + floor + " floor");
+		System.out.println("Someone at elevator " + id + " pressed " + floor + " floor");
 		if(moving)  
 		{
 			if(up) //elevator moving up
@@ -587,17 +608,17 @@ public class Elevator extends Thread{
 						if(down_path.peek() > position)  //elevator position is lower than floor
 						{
 							
-							MainController.up(id); //move N'th elevator upwards
+							controller.up(id); //move N'th elevator upwards
 							moving = true;
 							down = false;
 							up = true;
 						}else{ //elevator position is higher than floor
-							MainController.down(id); //move N'th elevator downwards
+							controller.down(id); //move N'th elevator downwards
 							moving = true;
 							down = true;
 							up = false;
 						}
-						System.out.println("Current path is down");
+						System.out.println("Elevator " + id + " current path is down");
 						direction_current_path = false; //set flag of current path to down
 						current_path = new PriorityBlockingQueue<Integer>(down_path);
 						current_max = down_max;
@@ -608,18 +629,18 @@ public class Elevator extends Thread{
 					}else{//new up event
 						if(up_path.peek() > position) //elevator position is lower than floor
 						{
-							MainController.up(id); //move N'th elevator upwards
+							controller.up(id); //move N'th elevator upwards
 							moving = true;
 							up = true;
 							down = false;
 						}else{ //elevator position is higher than floor
-							MainController.down(id); //move N'th elevator downwards
+							controller.down(id); //move N'th elevator downwards
 							moving = true;
 							up = false;
 							down = true;
 						}
 						direction_current_path = true; //set flag of current path to up
-						System.out.println("Current path is up");
+						System.out.println("Elevator " + id + " current path is up");
 						current_path = new PriorityBlockingQueue<Integer>(up_path);
 						current_max = up_max;
 						current_min = up_min;
@@ -634,15 +655,15 @@ public class Elevator extends Thread{
 					}
 					if(Math.abs(current_path.peek()-Math.round(position)) < 0.04) //position of elevator get close to a certain floor
 					{
-						MainController.stop(id); //ask elevator to stop for a while
-						MainController.openDoor(id); //open door
+						controller.stop(id); //ask elevator to stop for a while
+						controller.openDoor(id); //open door
 						alarm.sleep(2000); //wait 2 seconds
 						while(!wakeUp) 
 						{
 							wait(); 
 						}
 						wakeUp = false;
-						MainController.closeDoor(id); //close door
+						controller.closeDoor(id); //close door
 						alarm.sleep(2000);
 						while(!wakeUp)
 						{
@@ -753,12 +774,12 @@ public class Elevator extends Thread{
 	{
 		if(current_path.peek() > position)  //position lower than calling floor
 		{
-			MainController.up(id); //move upwards
+			controller.up(id); //move upwards
 			moving = true;
 			up = true;
 			down = false;
 		}else{  //position higher than calling floor
-			MainController.down(id); //move downwards
+			controller.down(id); //move downwards
 			moving = true;
 			down = true;
 			up = false;
