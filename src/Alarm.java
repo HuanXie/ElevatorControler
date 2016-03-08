@@ -1,16 +1,20 @@
-/*Alarm thread is used to ask elevator to sleep 2 seconds when door is open and closed.
- *Otherwise the elevator will be wake up when button i elevator is pressed, then the simulation of open and close 
- *will be interrupted.*/
+/*
+ * Alarm thread is used as Thread.sleep(), but with the benefit that it will release the lock and waits until alarm wakes it up.
+ * Any thread that call this function should have a wakeUp boolean to indicate if the thread have to wake up and wakeUp function
+ * to let alarm set wakeUp boolean.
+ */
 public class Alarm extends Thread{
-	boolean sleep;
-	int m;
-	Elevator e;
+	boolean sleep; // If elevator called sleep function
+	int m; // Number of millisecond to sleep
+	Elevator e; // Reference to that elevator
+	
+	// Constructor
 	Alarm(Elevator e){
 		this.e = e;
 		sleep = false;
 	}
 	
-	/*elevator thread call sleep function to change flag sleep*/
+	// Elevator thread call sleep function to change flag sleep
 	public synchronized void sleep(int m)
 	{
 		this.m = m;
@@ -18,6 +22,7 @@ public class Alarm extends Thread{
 		notifyAll();
 	}
 	
+	// Overwrites run method in Thread class
 	public void run()
 	{
 		try{
@@ -25,13 +30,13 @@ public class Alarm extends Thread{
 			{
 				synchronized(this)
 				{
-					while(!sleep) //check if flag sleep is changed
+					while(!sleep) // Check if flag sleep is changed
 					{
 						wait();
 					}
-					Thread.sleep(m); //sleep
-					sleep = false;  //reset sleep
-					e.wakeUp(); //wake up elevator
+					Thread.sleep(m); // Sleep
+					sleep = false;  // Reset sleep
+					e.wakeUp(); // Wake up elevator
 				}
 			}
 		}catch(Exception e)
