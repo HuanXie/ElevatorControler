@@ -366,7 +366,6 @@ public class Elevator extends Thread{
 							{
 								if(down_path.isEmpty())
 								{
-									System.out.println("current_max="+current_max);
 									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-floor));
 								}else{
 									return(Math.abs(current_max-Math.round(position))+Math.abs(current_max-down_max)+Math.abs(down_max-floor));
@@ -758,7 +757,7 @@ public class Elevator extends Thread{
 	
 	private synchronized void add_up_path(int floor)
 	{
-		System.out.println("Add this request to up_path");
+		System.out.println("Elevator " + id + ". Add this request to up_path");
 		if(!up_path.contains(floor))
 		{
 			up_path.add(floor);
@@ -768,7 +767,7 @@ public class Elevator extends Thread{
 	
 	private synchronized void add_down_path(int floor)
 	{
-		System.out.println("Add this request to down_path");
+		System.out.println("Elevator " + id + ". Add this request to down_path");
 		if(!down_path.contains(floor))
 		{
 			down_path.add(floor);
@@ -778,7 +777,7 @@ public class Elevator extends Thread{
 	
 	private synchronized void add_current_path(int floor)
 	{
-		System.out.println("Add this request to current_path");
+		System.out.println("Elevator " + id + ". Add this request to current_path");
 		if(!current_path.contains(floor))
 		{
 			current_path.add(floor);

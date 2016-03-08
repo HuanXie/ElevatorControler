@@ -83,6 +83,7 @@ public class MainController extends Thread{
 				{
 					if(floorButtons[i].up)
 					{
+						System.out.println(message + " already processing by another elevator");
 						break;
 					}else{
 						floorButtons[i].up = true;
@@ -90,6 +91,7 @@ public class MainController extends Thread{
 				}else{
 					if(floorButtons[i].down)
 					{
+						System.out.println(message + " already processing by another elevator");
 						break;
 					}else{
 						floorButtons[i].down = true;
@@ -123,6 +125,7 @@ public class MainController extends Thread{
 					}
 				}
 				elevators[allPosition.getFirst()].floorButtonPressed(i, (parts[2].equals("-1"))? "Down":"Up");
+				System.out.println("Elevator " + (allPosition.getFirst()+1) + " takes this request");
 				break;
 			}
 			case "p":
@@ -131,6 +134,7 @@ public class MainController extends Thread{
 				if(Integer.parseInt(parts[2]) == 32000)
 				{
 					elevators[i-1].stopElevator();
+					System.out.println("Stopped elevator " + i);
 				}else{
 					elevators[i-1].controlButtonPressed(Integer.parseInt(parts[2]));
 				}
