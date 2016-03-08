@@ -17,11 +17,9 @@ public class MainController extends Thread{
 	
 	public void run()
 	{		
-		String m;
 		while(true)
 		{
-			m = c.receive();
-			messageParser(m);
+			messageParser(c.receive());
 		}
 	}
 	
