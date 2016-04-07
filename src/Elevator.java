@@ -617,7 +617,7 @@ public class Elevator extends Thread{
 					}
 				}else{ // Else elevator is moving
 					// We wait until we reach any floor
-					while(Math.abs(position-Math.round(position)) > 0.04)
+					while(Math.abs(position-Math.round(position)) > 0.04 && moving)
 					{
 						wait();
 					}
